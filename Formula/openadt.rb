@@ -5,9 +5,9 @@ class Openadt < Formula
 
   # Stable: prebuilt zip from GitHub Releases.
   # STABLE and sha256 are refreshed by `bun run package:release`.
-  STABLE = "1.2.7"
+  STABLE = "1.3.0"
   url "https://github.com/abapify/openadt/releases/download/v#{STABLE}/openadt-#{STABLE}.zip"
-  sha256 "98f884a700ca38c054dd298021959da0d3d0d378b174d58052bfe8b2ff3fe95a"
+  sha256 "a9ba5dc24b22eb06db2b414d787d49b04d05f3402b1c2d26ff64ac71a13f76f6"
   version STABLE
 
   head "https://github.com/abapify/openadt.git", branch: "main"
@@ -25,8 +25,9 @@ class Openadt < Formula
     ENV.prepend_path "PATH", Formula["openjdk@21"].opt_bin
 
     if build.stable?
-      jar = ["openadt-#{version}/openadt.jar", "openadt.jar"].find { |path| File.file?(path) }
-      odie "Could not find openadt.jar in release zip" if jar.nil?
+      candidates = ["openadt-#{version}/openadt.jar", "openadt.jar"]
+      jar = candidates.find { |path| File.file?(path) }
+      odie "Could not find openadt.jar in release zip (tried: #{candidates.join(', ')})" if jar.nil?
       libexec.install jar => "openadt.jar"
     else
       # HEAD build is a multi-module Maven reactor; build from the repo root
