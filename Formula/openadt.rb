@@ -5,9 +5,9 @@ class Openadt < Formula
 
   # Stable: prebuilt zip from GitHub Releases.
   # STABLE and sha256 are refreshed by `bun run package:release`.
-  STABLE = "1.3.3"
+  STABLE = "1.3.4"
   url "https://github.com/abapify/openadt/releases/download/v#{STABLE}/openadt-#{STABLE}.zip"
-  sha256 "6480e819a558b925377ff6835ba94bfef5bf20a441e94b62ca0e3b67b9f708b3"
+  sha256 "0647ee5048d034cf827fd2dc65a7a1db05deb61a2c63087c1df3bf21e165765a"
   version STABLE
 
   head "https://github.com/abapify/openadt.git", branch: "main"
@@ -29,6 +29,12 @@ class Openadt < Formula
       jar = candidates.find { |path| File.file?(path) }
       odie "Could not find openadt.jar in release zip (tried: #{candidates.join(', ')})" if jar.nil?
       libexec.install jar => "openadt.jar"
+
+      mcp_launcher_candidates = ["openadt-#{version}/sap-adt-mcp-launcher", "sap-adt-mcp-launcher"]
+      mcp_launcher = mcp_launcher_candidates.find { |path| Dir.exist?(path) }
+      if mcp_launcher
+        libexec.install mcp_launcher => "sap-adt-mcp-launcher"
+      end
     else
       # HEAD build is a multi-module Maven reactor; build from the repo root
       # so sibling modules (openadt-config, openadt-sap-adt, openadt-bootstrap)
@@ -42,10 +48,16 @@ class Openadt < Formula
         .find { |path| !path.end_with?("-sources.jar", "-javadoc.jar") }
       odie "Could not find built OpenADT jar in apps/openadt-cli/target/" if built_jar.nil?
       libexec.install built_jar => "openadt.jar"
+
+      mcp_launcher = "tools/sap-adt-mcp-launcher"
+      if Dir.exist?(mcp_launcher)
+        libexec.install mcp_launcher => "sap-adt-mcp-launcher"
+      end
     end
 
     (bin/"openadt").write <<~SH
       #!/bin/bash
+      export OPENADT_HOME="#{libexec}"
       exec "#{Formula["openjdk@21"].opt_bin}/java" -jar "#{libexec}/openadt.jar" "$@"
     SH
     chmod 0755, bin/"openadt"
