@@ -11,7 +11,7 @@ class OpenadtMcp < Formula
   # formula — install from the release tarball directly for now.
   STABLE = "1.3.13"
   url "https://github.com/abapify/openadt/releases/download/v#{STABLE}/openadt-mcp-#{STABLE}-darwin-arm64.tar.gz"
-  sha256 "f33d8df9370386d38f6f9fac3602e7d6184324f68e4c1cbedba6f5d4d9408e19"
+  sha256 "82a49b8d360e6f51f1f9a42387fd7a3cd93a43df6516b374c63a00411123ca85"
   version STABLE
 
   head "https://github.com/abapify/openadt.git", branch: "main"
