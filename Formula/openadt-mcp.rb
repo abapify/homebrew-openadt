@@ -9,9 +9,9 @@ class OpenadtMcp < Formula
   # tools/package-release/src/main.ts). darwin-x64 and linux-x64 archives
   # are produced by the release matrix but not yet wired into a per-platform
   # formula — install from the release tarball directly for now.
-  STABLE = "2.1.0"
+  STABLE = "2.1.1"
   url "https://github.com/abapify/openadt/releases/download/v#{STABLE}/openadt-mcp-#{STABLE}-darwin-arm64.tar.gz"
-  sha256 "f056de3449a863fd1caa33a2cd00bb1e8dd3a55a7885ef47765e6ad3041fd89d"
+  sha256 "13aa5db7842df2ce17c43ddbe1741e36dd7928c2099fb53cbf1ce8f6a9442501"
   version STABLE
 
   head "https://github.com/abapify/openadt.git", branch: "main"
