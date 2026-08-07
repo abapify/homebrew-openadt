@@ -5,9 +5,9 @@ class Openadt < Formula
 
   # Stable: prebuilt zip from GitHub Releases.
   # STABLE and sha256 are refreshed by `bun run package:release`.
-  STABLE = "1.3.5"
+  STABLE = "3.0.0"
   url "https://github.com/abapify/openadt/releases/download/v#{STABLE}/openadt-#{STABLE}.zip"
-  sha256 "144d970aaf34ece64bfb37f8c18bf93171165d403ede19e75d3c66be0a20f8ff"
+  sha256 "a7abb96b29b643f23c2a85cb155f921f1ded13921ea0a0a2333f90e089b3e076"
   version STABLE
 
   head "https://github.com/abapify/openadt.git", branch: "main"
@@ -30,11 +30,13 @@ class Openadt < Formula
       odie "Could not find openadt.jar in release zip (tried: #{candidates.join(', ')})" if jar.nil?
       libexec.install jar => "openadt.jar"
 
-      mcp_launcher_candidates = ["openadt-#{version}/sap-adt-mcp-launcher", "sap-adt-mcp-launcher"]
-      mcp_launcher = mcp_launcher_candidates.find { |path| Dir.exist?(path) }
-      if mcp_launcher
-        libexec.install mcp_launcher => "sap-adt-mcp-launcher"
-      end
+      launcher_candidates = [
+        "openadt-#{version}/bin/openadt-launcher.sh",
+        "bin/openadt-launcher.sh",
+      ]
+      launcher = launcher_candidates.find { |path| File.file?(path) }
+      odie "Could not find bin/openadt-launcher.sh in release zip" if launcher.nil?
+      libexec.install launcher => "bin/openadt-launcher.sh"
     else
       # HEAD build is a multi-module Maven reactor; build from the repo root
       # so sibling modules (openadt-config, openadt-sap-adt, openadt-bootstrap)
@@ -48,17 +50,22 @@ class Openadt < Formula
         .find { |path| !path.end_with?("-sources.jar", "-javadoc.jar") }
       odie "Could not find built OpenADT jar in apps/openadt-cli/target/" if built_jar.nil?
       libexec.install built_jar => "openadt.jar"
-
-      mcp_launcher = "tools/sap-adt-mcp-launcher"
-      if Dir.exist?(mcp_launcher)
-        libexec.install mcp_launcher => "sap-adt-mcp-launcher"
-      end
+      libexec.install "packaging/unix/openadt-launcher.sh" => "bin/openadt-launcher.sh"
     end
 
+    chmod 0755, libexec/"bin/openadt-launcher.sh"
+    # The launcher compares this against ~/.openadt/runtime/version.txt to decide whether the
+    # SDK runtime jar needs rebuilding.
+    (libexec/"VERSION").write "#{version}\n"
+
+    # openjdk@21 is keg-only, so export JAVA_HOME for the launcher's java lookup. The launcher
+    # picks the lite jar or the SDK runtime jar per subcommand; running openadt.jar directly
+    # would leave fetch/proxy without ADT SDK transport.
     (bin/"openadt").write <<~SH
       #!/bin/bash
       export OPENADT_HOME="#{libexec}"
-      exec "#{Formula["openjdk@21"].opt_bin}/java" -jar "#{libexec}/openadt.jar" "$@"
+      export JAVA_HOME="${JAVA_HOME:-#{Formula["openjdk@21"].opt_prefix}}"
+      exec "#{libexec}/bin/openadt-launcher.sh" "$@"
     SH
     chmod 0755, bin/"openadt"
   end
